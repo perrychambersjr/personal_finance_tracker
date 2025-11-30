@@ -1,17 +1,30 @@
-import cors from 'cors';
 import dotenv from 'dotenv';
-import express, { Application, Request, Response } from 'express';
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { connectDB } from './config/db.ts';
+import userRoutes from './routes/userRoutes.ts';
 
-dotenv.config();
-// conect db
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const app: Application = express();
-app.use(cors());
-app.use(express.json());
-
-app.get('/', (req: Request, res: Response) => {
-    res.send('Finance Tracker Backend is running.');
+dotenv.config({
+    path: path.resolve(__dirname, '../../.env')
 });
 
+connectDB();
+
+const app = express();
+app.use(express.json());
+
+app.get('/', (req, res) => {
+    res.send('Hello World');
+});
+
+app.use('/api/users', userRoutes);
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
