@@ -1,0 +1,564 @@
+Step 1: Set Up the Project
+
+Initialize Node.js project
+
+mkdir finance-tracker
+cd finance-tracker
+npm init -y
+
+
+Install dependencies
+
+npm install express mongoose dotenv bcrypt jsonwebtoken cors body-parser
+npm install --save-dev nodemon
+
+
+express → backend framework
+
+mongoose → MongoDB ODM
+
+dotenv → manage environment variables
+
+bcrypt → password hashing
+
+jsonwebtoken → authentication
+
+cors → enable frontend requests
+
+body-parser → parse request bodies
+
+Project structure
+
+finance-tracker/
+├─ server.js
+├─ config/
+│  └─ db.js
+├─ models/
+│  ├─ User.js
+│  ├─ Transaction.js
+│  └─ Budget.js
+├─ routes/
+│  ├─ auth.js
+│  ├─ transactions.js
+│  └─ budgets.js
+└─ middleware/
+   └─ authMiddleware.js
+
+   Step 2: Set Up MongoDB Connection
+
+config/db.js
+
+import mongoose from "mongoose";
+
+export const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+};
+
+
+server.js
+
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import { connectDB } from "./config/db.js";
+import authRoutes from "./routes/auth.js";
+import transactionRoutes from "./routes/transactions.js";
+import budgetRoutes from "./routes/budgets.js";
+
+dotenv.config();
+connectDB();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use("/api/budgets", budgetRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+Step 3: Create Database Schemas
+User.js
+import mongoose from "mongoose";
+
+const userSchema = mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    passwordHash: { type: String, required: true }
+  },
+  { timestamps: true }
+);
+
+export default mongoose.model("User", userSchema);
+
+Transaction.js
+import mongoose from "mongoose";
+
+const transactionSchema = mongoose.Schema(
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    type: { type: String, enum: ["income", "expense"], required: true },
+    category: { type: String, required: true },
+    amount: { type: Number, required: true },
+    date: { type: Date, required: true },
+    notes: String,
+    receiptUrl: String,
+    recurring: { type: Boolean, default: false },
+    recurrenceInterval: { type: String, enum: ["weekly", "monthly", "yearly"] }
+  },
+  { timestamps: true }
+);
+
+export default mongoose.model("Transaction", transactionSchema);
+
+Budget.js
+import mongoose from "mongoose";
+
+const budgetSchema = mongoose.Schema(
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    category: { type: String, required: true },
+    amount: { type: Number, required: true },
+    month: { type: Number, required: true },
+    year: { type: Number, required: true }
+  },
+  { timestamps: true }
+);
+
+export default mongoose.model("Budget", budgetSchema);
+
+Step 4: Create Authentication API
+
+routes/auth.js
+
+import express from "express";
+import User from "../models/User.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+const router = express.Router();
+
+// Signup
+router.post("/signup", async (req, res) => {
+  const { name, email, password } = req.body;
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ message: "User already exists" });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, email, passwordHash });
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email } });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Login
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+export default router;
+
+
+middleware/authMiddleware.js
+
+import jwt from "jsonwebtoken";
+
+export const protect = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "Not authorized" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.id;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+Step 5: Transaction API Skeleton
+
+routes/transactions.js
+
+import express from "express";
+import Transaction from "../models/Transaction.js";
+import { protect } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
+
+// Get all transactions for user
+router.get("/", protect, async (req, res) => {
+  const { startDate, endDate, category } = req.query;
+  let filter = { userId: req.userId };
+
+  if (startDate || endDate) filter.date = {};
+  if (startDate) filter.date.$gte = new Date(startDate);
+  if (endDate) filter.date.$lte = new Date(endDate);
+  if (category) filter.category = category;
+
+  try {
+    const transactions = await Transaction.find(filter).sort({ date: -1 });
+    res.json(transactions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Create transaction
+router.post("/", protect, async (req, res) => {
+  try {
+    const transaction = await Transaction.create({ ...req.body, userId: req.userId });
+    res.status(201).json(transaction);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Edit transaction
+router.put("/:id", protect, async (req, res) => {
+  try {
+    const transaction = await Transaction.findOneAndUpdate(
+      { _id: req.params.id, userId: req.userId },
+      req.body,
+      { new: true }
+    );
+    res.json(transaction);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete transaction
+router.delete("/:id", protect, async (req, res) => {
+  try {
+    await Transaction.findOneAndDelete({ _id: req.params.id, userId: req.userId });
+    res.json({ message: "Transaction deleted" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+export default router;
+
+Step 6: Budget API Skeleton
+
+routes/budgets.js
+
+import express from "express";
+import Budget from "../models/Budget.js";
+import { protect } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
+
+// Get budgets for month/year
+router.get("/:month/:year", protect, async (req, res) => {
+  try {
+    const budgets = await Budget.find({
+      userId: req.userId,
+      month: req.params.month,
+      year: req.params.year
+    });
+    res.json(budgets);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Create budget
+router.post("/", protect, async (req, res) => {
+  try {
+    const budget = await Budget.create({ ...req.body, userId: req.userId });
+    res.status(201).json(budget);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Edit budget
+router.put("/:id", protect, async (req, res) => {
+  try {
+    const budget = await Budget.findOneAndUpdate(
+      { _id: req.params.id, userId: req.userId },
+      req.body,
+      { new: true }
+    );
+    res.json(budget);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete budget
+router.delete("/:id", protect, async (req, res) => {
+  try {
+    await Budget.findOneAndDelete({ _id: req.params.id, userId: req.userId });
+    res.json({ message: "Budget deleted" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+export default router;
+
+✅ Step 7: Next Steps (Frontend Integration)
+
+Once the backend is functional:
+
+Set up React frontend (Vite / Create React App)
+
+Build Auth Pages (signup/login)
+
+Build Transactions Page (CRUD + table)
+
+Build Dashboard Page (summary cards + charts)
+
+Build Budgets Page (progress bars + alerts)
+
+Add filters, CSV export, responsive styling
+
+
+Finance Tracker Frontend Roadmap Using Figma Design
+1️⃣ Set Up the Frontend Project
+
+Initialize React project (using Vite for speed)
+
+npm create vite@latest finance-tracker-frontend
+cd finance-tracker-frontend
+npm install
+
+
+Install dependencies
+
+npm install axios react-router-dom recharts tailwindcss @headlessui/react @heroicons/react
+npm install --save-dev autoprefixer postcss
+
+
+axios → API calls
+
+react-router-dom → routing between pages
+
+recharts → charts (line, bar, pie)
+
+tailwindcss → rapid UI styling
+
+@headlessui/react + @heroicons/react → dropdowns, modals, icons
+
+Set up Tailwind CSS
+
+npx tailwindcss init -p
+
+
+Add content paths in tailwind.config.js
+
+content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+
+
+Add Tailwind directives in index.css:
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+2️⃣ Define Pages Based on Figma Layout
+Page	Purpose
+DashboardPage	Main overview: cards (total income/expenses/net savings), line chart, pie chart, recent transactions
+TransactionsPage	Full list of transactions in table format, add/edit modal
+BudgetsPage	Budget setup per category, progress bars, alerts if over budget
+ReportsPage	Export CSV/PDF of transactions, charts summaries
+SettingsPage	Profile management, dark/light mode
+3️⃣ Component Breakdown (Based on Figma UI)
+
+Layout Components:
+
+Sidebar → navigation menu (Dashboard, Transactions, Budgets, Reports, Settings)
+
+Header → current month, total balance, quick add transaction button
+
+MainContent → wraps page content, scrollable
+
+Dashboard Components:
+
+SummaryCard → shows Total Income, Expenses, Net Savings
+
+LineChartCard → trends of income vs expenses
+
+PieChartCard → spending per category
+
+RecentTransactionsTable → last 5–10 transactions
+
+Transactions Components:
+
+TransactionTable → full transaction list with sorting/filtering
+
+TransactionModal → add/edit transaction
+
+FilterBar → filter by date/category/type
+
+Budget Components:
+
+BudgetCard → category budget with progress bar
+
+BudgetModal → add/edit budget
+
+Reusable Components:
+
+Button, Input, Select, DatePicker, Modal
+
+4️⃣ State Management
+
+Global Context (React Context API)
+
+AuthContext → stores user info, token, login/logout
+
+TransactionContext → transactions, filters, CRUD functions
+
+BudgetContext → budgets for selected month, CRUD functions
+
+Data Fetching
+
+Use axios to call backend endpoints:
+
+/api/auth → login/signup
+
+/api/transactions → get/add/update/delete transactions
+
+/api/budgets → get/add/update/delete budgets
+
+Optional: Use React Query for caching and background updates
+
+5️⃣ Dashboard Page Layout (Figma Inspired)
+
+Top Section (Summary Cards)
+
+3 cards: Total Income, Total Expenses, Net Savings
+
+Show amount + % change vs last month
+
+Middle Section (Charts)
+
+Line chart: Income vs Expenses trend over last 30 days
+
+Pie chart: Expenses by category
+
+Bottom Section
+
+Recent Transactions Table: last 5–10 entries
+
+Optional: quick add transaction button
+
+Responsive Tips
+
+Desktop: cards in a row, charts side-by-side
+
+Tablet/mobile: stacked cards, charts scrollable
+
+6️⃣ Transactions Page Layout
+
+Table
+
+Columns: Date, Category, Type, Amount, Notes, Actions (edit/delete)
+
+Sortable by column
+
+Filter bar for category, type, date range
+
+Modal
+
+Fields: Type, Category, Amount, Date, Notes, Receipt Upload
+
+Submit triggers POST/PUT to backend
+
+7️⃣ Budgets Page Layout
+
+List of budget categories (card or table)
+
+Each category shows:
+
+Budget amount
+
+Amount spent
+
+Progress bar with green/red depending on status
+
+Add/Edit modal to update budget amounts
+
+8️⃣ Charts Implementation
+
+Recharts library
+
+LineChart for income vs expense trend
+
+PieChart/Doughnut for category distribution
+
+Fetch backend data and transform into chart data structure
+
+const chartData = categories.map(c => ({
+  name: c.name,
+  value: totalSpentInCategory(c.name)
+}));
+
+9️⃣ Styling Notes (Figma Inspired)
+
+Color palette:
+
+Primary: #10B981 green for income/savings
+
+Danger: #EF4444 red for expenses
+
+Neutral: #F9FAFB background, white cards
+
+Cards: rounded corners, shadow, padding
+
+Sidebar: collapsible for mobile, highlight active page
+
+Charts: tooltips enabled, legend at bottom or side
+
+🔟 Suggested Development Order
+
+Setup React project + Tailwind
+
+Implement Sidebar + Header layout
+
+Implement Auth pages + integrate AuthContext
+
+Build DashboardPage with summary cards (dummy data first)
+
+Build TransactionsPage table + add/edit modal
+
+Connect Transactions API → CRUD fully functional
+
+Build BudgetsPage with progress bars
+
+Connect Budgets API → CRUD fully functional
+
+Implement charts on Dashboard → line + pie
+
+Add filters, responsive layout, styling
+
+Optional: CSV export, recurring transactions, dark mode

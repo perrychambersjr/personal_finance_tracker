@@ -1,0 +1,181 @@
++--------------------+           +--------------------+          +-------------------+
+|     Frontend       |  <------> |      Backend       | <------> |      Database      |
+| (React + Tailwind) |  HTTP     | (Node + Express)   |  MongoDB |   (MongoDB Atlas) |
++--------------------+  REST API +--------------------+          +-------------------+
+        |                           |                           |
+        |                           |                           |
+        v                           v                           v
+  Components / Pages         Routes / Controllers           Schemas / Models
+  State Management           Services / Business Logic     Aggregations / Indexes
+  API Integration            Middleware (auth, errors)     Optional: Redis Cache
+
+Notes:
+
+Frontend communicates with backend via REST API (or optionally GraphQL later).
+
+Backend handles business logic, validation, authentication.
+
+Database stores all persistent data, optimized with indexes for queries.
+
+Optional layers: caching (Redis), background jobs (recurring transactions), and file storage (receipts).
+
+Backend Architecture (Node + Express + MongoDB)
+Folder Structure
+backend/
+├─ server.js                  # Entry point
+├─ config/
+│  └─ db.js                   # MongoDB connection
+├─ controllers/
+│  ├─ authController.js
+│  ├─ transactionController.js
+│  └─ budgetController.js
+├─ models/
+│  ├─ User.js
+│  ├─ Transaction.js
+│  └─ Budget.js
+├─ routes/
+│  ├─ auth.js
+│  ├─ transactions.js
+│  └─ budgets.js
+├─ middleware/
+│  ├─ authMiddleware.js
+│  ├─ errorMiddleware.js
+│  └─ validationMiddleware.js
+├─ services/
+│  ├─ transactionService.js   # Business logic for transactions
+│  ├─ budgetService.js
+│  └─ authService.js
+├─ utils/
+│  ├─ token.js                # JWT helpers
+│  └─ logger.js
+├─ jobs/
+│  └─ recurringTransactions.js # Cron jobs
+└─ tests/                      # Unit & integration tests
+
+Key Principles
+
+Controllers → Handle request/response, delegate to services
+
+Services → Contain business logic, reusable for multiple controllers
+
+Middleware → Auth, validation, error handling
+
+Models → MongoDB schemas
+
+Utils → Helper functions, JWT, logger, formatting
+
+Jobs → Background tasks (e.g., recurring transactions, email notifications)
+
+Tests → Ensure each service/controller is unit-tested
+
+Frontend Architecture (React + Tailwind + Recharts)
+Folder Structure
+frontend/
+├─ src/
+│  ├─ components/             # Reusable UI components
+│  │  ├─ Button.jsx
+│  │  ├─ Input.jsx
+│  │  ├─ Modal.jsx
+│  │  ├─ SummaryCard.jsx
+│  │  ├─ LineChartCard.jsx
+│  │  ├─ PieChartCard.jsx
+│  │  └─ TransactionTable.jsx
+│  ├─ pages/
+│  │  ├─ DashboardPage.jsx
+│  │  ├─ TransactionsPage.jsx
+│  │  ├─ BudgetsPage.jsx
+│  │  ├─ ReportsPage.jsx
+│  │  └─ SettingsPage.jsx
+│  ├─ context/                # Context API or Redux slices
+│  │  ├─ AuthContext.jsx
+│  │  ├─ TransactionContext.jsx
+│  │  └─ BudgetContext.jsx
+│  ├─ services/               # API integration functions
+│  │  ├─ authService.js
+│  │  ├─ transactionService.js
+│  │  └─ budgetService.js
+│  ├─ routes/                 # Frontend routes
+│  │  └─ AppRoutes.jsx
+│  ├─ utils/                  # Helpers, formatters
+│  │  └─ dateFormatter.js
+│  └─ App.jsx
+└─ public/
+
+Key Principles
+
+Pages → Map directly to route paths
+
+Components → Reusable UI elements, match Figma design
+
+Context / Redux → Global state: user auth, transactions, budgets
+
+Services → Centralized API calls; keeps components clean
+
+Utils → Format currency, dates, chart data
+
+Responsive Design → Mobile-first; Tailwind ensures fast iterations
+
+Data Flow Example
+
+User logs in
+
+LoginForm → calls authService.login()
+
+Backend /api/auth/login → verifies user → returns JWT
+
+Frontend stores JWT in AuthContext → all API calls include Authorization header
+
+Fetch transactions for dashboard
+
+DashboardPage mounts → calls transactionService.getTransactions()
+
+Backend /api/transactions → queries MongoDB → returns JSON
+
+Frontend maps data → renders charts and tables
+
+Add new transaction
+
+TransactionModal submits → calls transactionService.addTransaction()
+
+Backend validates → saves to MongoDB → returns saved object
+
+Frontend updates global state (TransactionContext) → UI refreshes
+
+5️⃣ Scalability & Modular Design
+Backend Scalability
+
+Separation of concerns (controllers/services/models) → easy to maintain
+
+Middleware-based auth & validation → reusable across routes
+
+Service layer → can switch DB or add caching easily
+
+Jobs folder → cron jobs or background workers can scale separately
+
+Optional scaling: microservices for reporting, notifications
+
+Frontend Scalability
+
+Component-based UI → easy to reuse across pages
+
+Context/Redux state management → global state separation
+
+Service layer for API → can swap REST → GraphQL easily
+
+Tailwind utility classes → scalable CSS, avoids messy overrides
+
+6️⃣ Optional Enhancements for Future Growth
+
+Caching → Redis for transaction summaries, dashboard stats
+
+GraphQL layer → flexible queries for frontend
+
+Microservices → split transactions, budgets, auth into services
+
+CI/CD → automated tests & deployments
+
+Cloud storage → S3 for receipt uploads
+
+Push notifications → for budget alerts
+
+Multi-tenancy / multi-user → for team finance dashboards
