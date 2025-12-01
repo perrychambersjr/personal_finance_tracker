@@ -3,6 +3,8 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { connectDB } from './config/db.ts';
+import { protect } from './middleware/middleware.ts';
+import authRoutes from './routes/authRoutes.ts';
 import userRoutes from './routes/userRoutes.ts';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,7 +23,8 @@ app.get('/', (req, res) => {
     res.send('Hello World');
 });
 
-app.use('/api/users', userRoutes);
+app.use('/api/users', protect, userRoutes);
+app.use('/api/auth', authRoutes);
 
 const PORT = process.env.PORT || 5000;
 
