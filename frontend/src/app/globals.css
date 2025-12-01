@@ -4,8 +4,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --primary: #1E3A8A;
-  --secondary: #F59E0B;
+  --primary: #C8EE44;
+  --secondary: #29A073;
   --accent: #10B981;
 
   --font-sans: 'Geist Sans', Arial, Helvetica, sans-serif;
@@ -15,11 +15,11 @@
 /* Dark mode */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #1C1A2E;
     --foreground: #ededed;
-    --primary: #3B82F6;
-    --secondary: #FBBF24;
-    --accent: #34D399;
+    --primary: #C8EE44;
+    --secondary: #29A073;
+    --accent: #10B981;
   }
 }
 
@@ -32,7 +32,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #1C1A2E;
     --foreground: #ededed;
   }
 }
