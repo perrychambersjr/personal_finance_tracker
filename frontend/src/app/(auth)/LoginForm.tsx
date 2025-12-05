@@ -64,95 +64,101 @@ export const LoginForm = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row justify-center items-center min-h-screen w-full bg-[var(--background)] p-4 gap-8">
-      {/* Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md p-8 bg-[var(--background)] rounded-lg shadow-md"
-      >
-        <h1 className="text-3xl font-semibold mb-4 text-[var(--foreground)]">
-          {mode === "login" ? "Welcome back" : "Create your account"}
-        </h1>
-        <p className="text-lg font-light mb-6 text-[var(--foreground)]/60">
-          {mode === "login"
-            ? "Please enter your details"
-            : "Fill in your email and password to register"}
-        </p>
+   <div className="flex flex-col items-center md:flex-row min-h-screen w-full bg-white">
+    {/* Form */}
+    <form
+      onSubmit={handleSubmit}
+      className="w-full max-w-md h-full bg-white rounded-lg px-8 py-10 mx-auto"
+    >
+      <h1 className="text-3xl font-semibold mb-4 text-gray-800">
+        {mode === "login" ? "Welcome back" : "Create your account"}
+      </h1>
+      <p className="text-lg font-light mb-6 text-gray-600">
+        {mode === "login"
+          ? "Please enter your details"
+          : "Fill in your email and password to register"}
+      </p>
 
-        {error && (
-          <p className="mb-4 text-red-500 font-medium text-sm">{error}</p>
-        )}
+      {error && (
+        <p className="mb-4 text-red-500 font-medium text-sm">{error}</p>
+      )}
 
       {mode === "register" && (
-        <label className="block mb-4 text-[var(--foreground)] font-medium">
+        <label className="block mb-4 text-gray-800 font-medium">
           Name
           <input
             type="text"
             value={name}
             placeholder="Enter your name"
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             required
           />
         </label>
       )}
 
-        <label className="block mb-4 text-[var(--foreground)] font-medium">
-          Email
-          <input
-            type="email"
-            value={email}
-            placeholder="Enter your email"
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            required
-          />
-        </label>
+      <label className="block mb-4 text-gray-800 font-medium">
+        Email
+        <input
+          type="email"
+          value={email}
+          placeholder="Enter your email"
+          onChange={(e) => setEmail(e.target.value)}
+          className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </label>
 
-        <label className="block mb-6 text-[var(--foreground)] font-medium">
-          Password
-          <input
-            type="password"
-            value={password}
-            placeholder="••••••••••"
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            required
-          />
-        </label>
+      <label className="block mb-6 text-gray-800 font-medium">
+        Password
+        <input
+          type="password"
+          value={password}
+          placeholder="••••••••••"
+          onChange={(e) => setPassword(e.target.value)}
+          className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </label>
 
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full py-2 px-4 rounded-md bg-[var(--primary)] text-white font-semibold hover:bg-[var(--secondary)] disabled:opacity-50 disabled:cursor-not-allowed transition-transform duration-600"
+      >
+        {loading
+          ? mode === "login"
+            ? "Logging in..."
+            : "Creating account..."
+          : mode === "login"
+          ? "Sign in"
+          : "Register"}
+      </button>
+
+      <p className="mt-4 text-sm text-gray-600">
+        {mode === "login"
+          ? "Don't have an account?"
+          : "Already have an account?"}{" "}
         <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-2 px-4 rounded-md bg-[var(--primary)] text-black font-semibold hover:bg-[var(--primary)/90] disabled:opacity-50 disabled:cursor-not-allowed"
+          type="button"
+          className="text-[--var(--primary)] font-medium hover:underline transition-transform duration-600"
+          onClick={() => setMode(mode === "login" ? "register" : "login")}
         >
-          {loading
-            ? mode === "login"
-              ? "Logging in..."
-              : "Creating account..."
-            : mode === "login"
-            ? "Sign in"
-            : "Register"}
+          {mode === "login" ? "Sign up" : "Log in"}
         </button>
+      </p>
+    </form>
 
-        <p className="mt-4 text-sm text-[var(--foreground)]/70">
-          {mode === "login"
-            ? "Don't have an account?"
-            : "Already have an account?"}{" "}
-          <button
-            type="button"
-            className="text-[var(--primary)] font-medium hover:underline"
-            onClick={() => setMode(mode === "login" ? "register" : "login")}
-          >
-            {mode === "login" ? "Sign up" : "Log in"}
-          </button>
-        </p>
-      </form>
-
-      {/* Logo */}
-      <div className="hidden md:block">
-        <Image src="/LoginLogo.png" width={350} height={300} alt="Logo" />
-      </div>
+    <div className="hidden md:block w-1/2 h-screen">
+      <Image
+        src="/LoginLogo.png"
+        alt="Logo"
+        width={800}
+        height={800}
+        className="w-full h-full object-cover object-center"
+      />
     </div>
+  </div>
+
   );
 };

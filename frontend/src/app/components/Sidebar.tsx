@@ -1,44 +1,112 @@
 // Sidebar.tsx
 "use client";
 
-import clsx from "clsx";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/transactions", label: "Transactions" },
-  { href: "/budgets", label: "Budgets" },
-  { href: "/invoices", label: "Invoices" },
-  { href: "/accounts", label: "Accounts" },
-  { href: "/settings", label: "Settings" },
-];
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    // Clear bearer token from cookies and localStorage
+    document.cookie = "auth_token=; Max-Age=0; path=/"; 
+    localStorage.removeItem("token"); 
+
+    // Redirect to the login page after logging out
+    window.location.href = "/login";
+  };
+
+  const navItems = [
+    { href: "/dashboard", label: "Dashboard", icon: "Dashboard" },
+    { href: "/transactions", label: "Transactions", icon: "Transactions" },
+    { href: "/budgets", label: "Budgets", icon: "Budgets" },
+    { href: "/invoices", label: "Invoices", icon: "Invoices" },
+    { href: "/accounts", label: "Accounts", icon: "Accounts" },
+    { href: "/settings", label: "Settings", icon: "Settings" },
+  ];
+
+  const secondaryItems = [
+    { href: "/help", label: "Help", icon: "Help" },
+    { href: "#", label: "Logout", icon: "Logout", onClick: handleLogout},
+  ]
 
   return (
-    <aside className="w-64 bg-white border-r h-screen p-6 flex flex-col">
-      <h2 className="text-2xl font-bold mb-8 text-gray-900">My App</h2>
+    <aside className="w-64 h-screen bg-gray-100 flex flex-col p-4">
+      <Image
+        src="/Logo.svg"
+        alt="Finance Dashboard Logo"
+        width={150}
+        height={50}
+        className="mb-8"
+      />
 
-      <nav className="flex flex-col gap-2">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={clsx(
-              "px-4 py-2 rounded-md hover:bg-gray-100 transition text-gray-900",
-              pathname === item.href && "bg-gray-200 font-semibold"
-            )}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+      <div className="flex flex-col mb-auto">
+        {navItems.map((item) => {
+          const isSelected = pathname === item.href;
 
-      <div className="mt-auto text-gray-400 text-sm">
-        &copy; {new Date().getFullYear()} My App
+          const iconSrc = `/${item.icon}_${
+            isSelected ? "Selected" : "Unselected"
+          }.svg`;
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 mb-4 p-2 rounded-md font-semibold text-sm ${
+                isSelected ? "bg-[var(--primary)]" : ""
+              }`}
+            >
+              <Image
+                src={iconSrc}
+                alt={item.label}
+                width={22}
+                height={22}
+                className="shrink-0"
+              />
+
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
       </div>
+
+      {/* Spacer */}
+      <div className="flex-grow"></div>
+
+      <div>
+        {secondaryItems.map((item) => {
+          const isSelected = pathname === item.href;
+
+          const iconSrc = `/${item.icon}_${
+            isSelected ? "Selected" : "Unselected"
+          }.svg`;
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={item.onClick}
+              className={`flex items-center gap-3 mb-4 p-2 rounded-md font-semibold text-sm ${
+                isSelected ? "bg-[var(--primary)]" : ""
+              }`}
+            >
+              <Image
+                src={iconSrc}
+                alt={item.label}
+                width={22}
+                height={22}
+                className="shrink-0"
+              />
+
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+      
     </aside>
   );
 };
