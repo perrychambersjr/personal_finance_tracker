@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useUserStore } from "../store";
 
 export const LoginForm = () => {
   const router = useRouter();
@@ -22,20 +23,17 @@ export const LoginForm = () => {
     try {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
 
-      // Prepare body
       const bodyData =
         mode === "register"
           ? { name, email, password }
           : { email, password };
 
-      // Send request
       const res = await fetch(url + endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyData),
       });
 
-      // Instead of assuming JSON, check first
       const text = await res.text(); // get raw response
       console.log("Raw response:", text);
 
@@ -52,6 +50,9 @@ export const LoginForm = () => {
       if (!res.ok) {
         throw new Error(data.message || "Request failed");
       }
+
+      console.log(data.user);
+      useUserStore.getState().setUser(data.user);
 
       // Save token
       localStorage.setItem("token", data.token);
