@@ -1,9 +1,11 @@
 import { Router } from "express";
-import { createUser, getUsers } from '../controllers/userController.ts';
+import { createUser, getUserById, getUsers, updateUser } from '../controllers/userController.ts';
 
 const router = Router();
 
 router.post('/', createUser);
 router.get('/', getUsers);
+router.get('/:id', getUserById);
+router.put('/:id', updateUser);
 
-export default router;
+export default router;  
