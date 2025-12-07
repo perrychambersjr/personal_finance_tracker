@@ -20,7 +20,7 @@ export const signup = async(req: Request, res: Response) => {
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret', { expiresIn: "7d" });
 
-        res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email }});
+        res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email, birthDate: user.birthDate, phoneNumber: user.phoneNumber }});
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }
@@ -40,7 +40,7 @@ export const login = async(req: Request, res: Response) => {
         })
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
-        res.json({ token, user:{ id: user._id, name: user.name, email: user.email }});
+        res.json({ token, user:{ id: user._id, name: user.name, email: user.email, birthDate: user.birthDate, phoneNumber: user.phoneNumber }});
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }
