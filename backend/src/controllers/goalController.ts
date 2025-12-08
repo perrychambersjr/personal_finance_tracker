@@ -1,16 +1,17 @@
 import { Request, Response } from 'express';
 import Goal from '../models/Goal.ts';
+import { AuthRequest } from '../types/AuthRequest.ts';
 
-export const getGoals = async (req: Request, res: Response) => {
+export const getGoals = async (req: AuthRequest, res: Response) => {
     try {
-        const goals = await Goal.find({ userId: req.query.id });
+        const goals = await Goal.find({ userId: req.user!.id });
         res.status(200).json(goals);
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }
 }
 
-export const createGoal = async (req: Request, res: Response) => {
+export const createGoal = async (req: AuthRequest, res: Response) => {
     try {
         const goal = new Goal(req.body);
         await goal.save();
