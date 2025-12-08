@@ -23,7 +23,8 @@ const Sidebar = () => {
     { href: "/dashboard", label: "Dashboard", icon: "Dashboard" },
     { href: "/transactions", label: "Transactions", icon: "Transactions" },
     { href: "/budgets", label: "Budgets", icon: "Budgets" },
-    { href: "/invoices", label: "Invoices", icon: "Invoices" },
+    { href: "/goals", label: "Goals", icon: "Goals" },
+    { href: "/analytics", label: "Analytics", icon: "Analytics" },
     { href: "/accounts", label: "Accounts", icon: "Accounts" },
     { href: "/settings", label: "Settings", icon: "Settings" },
   ];
