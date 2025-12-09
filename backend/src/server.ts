@@ -4,7 +4,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { connectDB } from './config/db.ts';
-import { protect, authorize } from './middleware/middleware.ts';
+import { protect } from './middleware/middleware.ts';
 import authRoutes from './routes/authRoutes.ts';
 import goalRoutes from './routes/goalRoutes.ts';
 import userRoutes from './routes/userRoutes.ts';
@@ -29,9 +29,9 @@ app.get('/', (req, res) => {
     res.send('Hello World');
 });
 
-app.use('/api/users', protect, userRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/goals', authorize, goalRoutes);
+app.use('/api/users', protect, userRoutes);
+app.use('/api/goals', protect, goalRoutes);
 
 const PORT = process.env.PORT || 5000;
 
