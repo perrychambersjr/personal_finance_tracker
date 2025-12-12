@@ -54,13 +54,3 @@ h1 {
 h2 {
   @apply text-2xl font-semibold mb-3;
 }
-
-/* Cards */
-.card {
-  @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4;
-}
-
-/* Buttons */
-.btn-primary {
-  @apply bg-[var(--primary)] text-white py-2 px-4 rounded-md hover:bg-[var(--primary)]/90 disabled:opacity-50 disabled:cursor-not-allowed;
-}
